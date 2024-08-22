@@ -1,10 +1,25 @@
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { GraphQLModule, Query, Resolver } from '@nestjs/graphql';
+import { join } from 'path';
+import { RestaurantsModule } from './restaurants/restaurants.module';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    GraphQLModule.forRoot({
+      driver: ApolloDriver,
+      autoSchemaFile: true, //메모리로부터 파일 생성
+    }),
+    RestaurantsModule,
+  ],
+  controllers: [],
+  providers: [],
 })
-export class AppModule {}
+
+// @Resolver()
+export class AppModule {
+  @Query(() => String)
+  sayHello(): string {
+    return 'Hello World!';
+  }
+}
