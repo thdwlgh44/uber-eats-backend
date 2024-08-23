@@ -2,7 +2,7 @@ import { Field, InputType, ObjectType } from "@nestjs/graphql";
 import { IsBoolean, IsOptional, IsString, Length } from "class-validator";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@InputType({ isAbstract:true })
+@InputType({ isAbstract:true }) //스키마에 등록되도록 한다.
 @ObjectType() //자동으로 스키마를 빌드하기 위해 사용하는 GraphQL decorator
 @Entity()
 export class Restaurant {
