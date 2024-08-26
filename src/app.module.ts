@@ -1,15 +1,15 @@
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import * as Joi from 'joi';
 import { GraphQLModule, Query, Resolver } from '@nestjs/graphql';
-import { join } from 'path';
-import { RestaurantsModule } from './restaurants/restaurants.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { Restaurant } from './restaurants/entities/restaurant.entity';
 import { UsersModule } from './users/users.module';
 import { CommonModule } from './common/common.module';
 import { User } from './users/entites/user.entity';
+import { JwtModule } from './jwt/jwt.module';
+import { JwtMiddleware } from './jwt/jwt.middleware';
+import { AuthModule } from './auth/auth.module';
 
 console.log(Joi);
 
@@ -26,6 +26,7 @@ console.log(Joi);
         DB_USERNAME: Joi.string().required(),
         DB_PASSWORD: Joi.string().required(),
         DB_NAME: Joi.string().required(),
+        PRIVATE_KEY: Joi.string().required(),
       }),
     }),
     TypeOrmModule.forRoot({
@@ -42,18 +43,20 @@ console.log(Joi);
     GraphQLModule.forRoot({
       driver: ApolloDriver,
       autoSchemaFile: true, //메모리로부터 파일 생성
+      context: ({ req }) => ({ user:req['user'] }) //jwt middleware request user
     }),
     UsersModule,
-    CommonModule,
+    JwtModule.forRoot({
+      privateKey: process.env.PRIVATE_KEY,
+    }),
   ],
   controllers: [],
   providers: [],
 })
 
 // @Resolver()
-export class AppModule {
-  @Query(() => String)
-  sayHello(): string {
-    return 'Hello World!';
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(JwtMiddleware).forRoutes({path:"/graphql", method:RequestMethod.POST});
   }
 }
