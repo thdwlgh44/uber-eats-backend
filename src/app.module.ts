@@ -11,6 +11,9 @@ import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
 import { AuthModule } from './auth/auth.module';
 import { Verification } from './users/verification.entity';
+import { Restaurant } from './restaurants/entities/restaurant.entity';
+import { Category } from './common/entities/category.entity';
+import { RestaurantsModule } from './restaurants/restaurants.module';
 
 console.log(Joi);
 
@@ -39,14 +42,17 @@ console.log(Joi);
       database: process.env.DB_NAME,
       synchronize: process.env.NODE_ENV !== 'prod',
       logging: true,
-      entities: [User, Verification],
+      entities: [User, Verification, Restaurant, Category],
     }),
     GraphQLModule.forRoot({
       driver: ApolloDriver,
       autoSchemaFile: true, //메모리로부터 파일 생성
-      context: ({ req }) => ({ user:req['user'] }) //jwt middleware request user
+      // context: ({ req }) => ({ user:req['user'] }) //jwt middleware request user
+      context: ({ req }) => ({ user: req.user }) //jwt middleware request user
     }),
+    AuthModule,
     UsersModule,
+    RestaurantsModule,
     JwtModule.forRoot({
       privateKey: process.env.PRIVATE_KEY,
     }),

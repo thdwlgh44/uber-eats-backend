@@ -9,95 +9,50 @@ import { AuthUser } from "src/auth/auth-user.decorator";
 import { UserProfileInput, UserProfileOutput } from "./dtos/user-profile.dto";
 import { EditProfileInput, EditProfileOuput } from "./dtos/edit-profile.dto";
 import { VerifyEmailInput, VerifyEmailOutput } from "./dtos/verify-email.dto";
+import { Role } from "src/auth/role.decorator";
 
-@Resolver(of => User)
+@Resolver(() => User)
 export class UsersResolver {
     constructor(
         private readonly userService: UserService
     ) {}
 
+    //resolver에 metatdata role이 없으면 public resolver라는 뜻
     @Mutation(returns => CreateAccountOutput)
     async createAccount(@Args('input') createAccountInput: CreateAccountInput): Promise<CreateAccountOutput> {
-        try {
-            return this.userService.createAccount(createAccountInput);
-        } catch (error) {
-            return {
-                error,
-                ok: false,
-            }
-        }
+        return this.userService.createAccount(createAccountInput);
     }
 
     @Mutation(returns => LoginOutput)
     async login(@Args('input') loginInput: LoginInput): Promise<LoginOutput> {
-        try {
-            return this.userService.login(loginInput);
-        } catch (error) {
-            return {
-                ok: false,
-                error,
-            }
-        }
+        return this.userService.login(loginInput);
     }
 
     @Query(retunrs => User)
-    @UseGuards(AuthGuard)
-    me(@AuthUser() authUser: User) {
-        return authUser;
+    @Role(["Any"])
+    me(@AuthUser() authUser: { user: User }): User {
+    // me(@AuthUser() authUser: User) {
+        console.log('authUser:', authUser)
+        return authUser.user;
     }
 
-    @UseGuards(AuthGuard)
     @Query(returns => UserProfileOutput)
+    @Role(["Any"])
     async userProfile(@Args() userProfileInput: UserProfileInput): Promise<UserProfileOutput> {
-        try {
-           const user = await this.userService.findById(userProfileInput.userId);
-           if(!user) {
-            throw Error();
-           }
-           return {
-            ok: true,
-            user,
-           };
-        } catch(e) {
-            return {
-                error: "User Not Found",
-                ok:false,
-            };
-        }
+        return this.userService.findById(userProfileInput.userId);
     }
 
-    @UseGuards(AuthGuard)
     @Mutation(returns => EditProfileOuput)
+    @Role(["Any"])
     async editProfile(
         @AuthUser() authUser: User, 
         @Args('input') editProfileInput: EditProfileInput,
-        ): Promise<EditProfileOuput> {
-            try {
-                console.log(editProfileInput);
-                await this.userService.editProfile(authUser.id, editProfileInput);
-                return {
-                    ok: true,
-                };
-            } catch(error) {
-                return {
-                    ok:false,
-                    error,
-                };
-            }
-        }
+    ): Promise<EditProfileOuput> {
+        return this.userService.editProfile(authUser.id, editProfileInput);
+    }
 
-        @Mutation(returns => VerifyEmailOutput)
-        async verifyEmail(@Args('input') { code }: VerifyEmailInput): Promise<VerifyEmailOutput> {
-            try {
-                await this.userService.verifyEmail(code);
-                return {
-                    ok:true,
-                };
-            } catch(error) {
-                return {
-                    ok:false,
-                    error
-                }
-            }
-        }
+    @Mutation(returns => VerifyEmailOutput)
+    verifyEmail(@Args('input') { code }: VerifyEmailInput): Promise<VerifyEmailOutput> {
+        return this.userService.verifyEmail(code);
+    }
 }
